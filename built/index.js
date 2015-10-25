@@ -13,7 +13,7 @@ var ShellGame = React.createClass({displayName: 'ShellGame',
   getInitialState: function () {
     var cups = [];
     for (var i = 0; i < NUM_CUPS; i++) {
-      cups.push({id: i, up: false, pos: i})
+      cups.push({id: i, up: false, pos: i, oldPos: i})
     }
     return {
       status: Status.new_game,
@@ -61,15 +61,16 @@ var ShellGame = React.createClass({displayName: 'ShellGame',
       }
     }
     else if (type == Animation.MOVE_CUPS) {
-      if (this.state.frame < GAME_ROUND) {
+      if (this.state.frame < GAME_ROUND * 2) {
         // Make 2 cups switch position
         a = Math.floor(Math.random() * NUM_CUPS);
         b = (a + 1) % NUM_CUPS;
-        tempPosition = this.state.cups[a].pos;
-        this.state.cups[a].pos = this.state.cups[b].pos;
-        this.state.cups[b].pos = tempPosition;
+        this.state.cups[a].oldPos = this.state.cups[a].pos;
+        this.state.cups[a].pos = this.state.cups[b].oldPos = this.state.cups[b].pos;
+        this.state.cups[b].pos = this.state.cups[a].oldPos;
+        this.state.cups[3-a-b].oldPos = this.state.cups[3-a-b].pos;
         this.setState({frame: this.state.frame+1});
-        setTimeout(function () {that.playAnimation(type, callback)}, 1000);
+        setTimeout(function () {that.playAnimation(type, callback)}, 2000);
       }
       else {
         this.setState({frame: 0});
@@ -121,6 +122,8 @@ var CupView = React.createClass({displayName: 'CupView',
     var classArray = ['cup'];
     var position = 'position_' + cup.pos;
     classArray.push(position);
+    var move = 'move_from_' + cup.oldPos + '_to_' + cup.pos;
+    classArray.push(move);
     if (raise) { classArray.push('raise'); }
     var classes = React.addons.classSet.apply(null, classArray);
     return (
