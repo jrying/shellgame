@@ -3,6 +3,7 @@ var Game = function () {
   this.gameStatus = "new";
   this.isballVisible = false;
   this.isCupUp = false;
+  this.isOverlayShown = "new";
   this.cups = [];
   this.numCups = 3;
   this.rounds = 5;

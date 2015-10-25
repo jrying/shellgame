@@ -4,11 +4,14 @@ $cup_slope: 20px;
 $cup_gap: 40px;
 $ball_radius: 40px;
 
-.gameBoard {
+.board {
   background-color: lightblue;
   position: relative;
-  height: $cup_height*2 + $cup_gap*2;
-  width: $cup_width*3 + $cup_gap*4;
+  height: $cup_height*2 - $cup_gap;
+  width: $cup_width*3 + $cup_gap*6;
+  border: 100px solid;
+  border-color: lightblue;
+  border-bottom-color: floralwhite;
 }
 
 .cup {
@@ -16,6 +19,7 @@ $ball_radius: 40px;
   border: $cup_slope solid transparent;
   border-bottom: $cup_height solid darkblue;
   border-top: 0px transparent;
+  border-radius: 20px;
   display: inline-block;
   position: absolute; 
   top: $cup_height;
@@ -41,27 +45,17 @@ $ball_radius: 40px;
   z-index: 2;  
 }
 
+.message {
+  padding-bottom: 100px;
+}
+
 .hidden {
   display: none;
 }
 
-.from_1_to_2 {
-  -webkit-animation-duration: 0.20s;
-          animation-duration: 0.20s;
-  -webkit-animation-name: from_1_to_2;
-          animation-name: from_1_to_2;
-  -webkit-animation-fill-mode: forwards;
-          animation-fill-mode: forwards;
-}
 
 @for $pos from -1 through 2 {
   .position_#{$pos} {
-    left: $cup_gap + ($cup_gap + $cup_width) * $pos;
+    left: $cup_gap*2 + ($cup_gap + $cup_width) * $pos;
   }
 }
-
-@keyframes from_1_to_2 {
-  from {
-    left: 140; }
-  to {
-    left: 240; } }
