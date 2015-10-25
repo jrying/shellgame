@@ -1,0 +1,65 @@
+.gameBoard {
+  background-color: lightblue;
+  position: relative;
+  height: 480px;
+  width: 640px; }
+
+.cup {
+  width: 120px;
+  border: 20px solid transparent;
+  border-bottom: 200px solid darkblue;
+  border-top: 0px transparent;
+  display: inline-block;
+  position: absolute;
+  top: 200px;
+  transition: all 0.5s ease;
+  z-index: 1; }
+
+.cup.raise {
+  top: 40px; }
+
+.ball {
+  content: "";
+  border: 40px solid red;
+  border-radius: 40px;
+  top: 320px;
+  position: absolute;
+  margin-left: 40px; }
+
+.overlay {
+  z-index: 2; }
+
+.hidden {
+  display: none; }
+
+.from_1_to_2 {
+  -webkit-animation-duration: 0.20s;
+  animation-duration: 0.20s;
+  -webkit-animation-name: from_1_to_2;
+  animation-name: from_1_to_2;
+  -webkit-animation-fill-mode: forwards;
+  animation-fill-mode: forwards; }
+
+.position_-1 {
+  left: -160px; }
+
+.position_0 {
+  left: 40px; }
+
+.position_1 {
+  left: 240px; }
+
+.position_2 {
+  left: 440px; }
+
+@-webkit-keyframes from_1_to_2 {
+  from {
+    left: 140; }
+  to {
+    left: 240; } }
+
+@keyframes from_1_to_2 {
+  from {
+    left: 140; }
+  to {
+    left: 240; } }
