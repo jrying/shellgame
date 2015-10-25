@@ -1,109 +1,142 @@
 /** @jsx React.DOM */
 
-//TODO improve animation
+//TODO improve Animation
 //TODO fix sequence, remove timeouts
 //TODO make better dom structure and css to support devices
-var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
 
-var GameView = React.createClass({displayName: 'GameView',
+var Animation = {SHOW_BALL: 1, MOVE_CUPS: 2}
+var Status = {new_game: 1, start: 2, end: 3, end_win: 4, end_lose: 5}
+var GAME_ROUND = 3;
+var NUM_CUPS = 3;
+
+var ShellGame = React.createClass({displayName: 'ShellGame',
   getInitialState: function () {
-    return {game: new Game};
+    var cups = [];
+    for (var i = 0; i < NUM_CUPS; i++) {
+      cups.push({id: i, up: false, pos: i, oldPos: i})
+    }
+    return {
+      status: Status.new_game,
+      frame: 0,
+      cups: cups,
+      ball: false,
+      overlay: true
+    };
   },
   newGame: function () {
     this.setState(this.getInitialState());
-    this.state.game.gameStatus = "new";
   },
   startGame: function () {
-    this.state.game.gameStatus = "start";
-    // Show ball
-    this.showBall();
-    // Move cups
-    // Guess
-    setTimeout(this.startShow, 2000);
+    var that = this;
+    this.setState({status: Status.start, overlay: false});
+    this.playAnimation(Animation.SHOW_BALL, function () {
+      that.playAnimation(Animation.MOVE_CUPS, 
+        function () {
+          that.setState({overlay: true});
+        });
+    });
   },
   endGame: function () {
-    this.state.game.showHideBall(true);
-    this.state.game.upDownCup(true);
-    this.setState(this.state.game);
-    this.state.game.gameStatus = "end";
-    setTimeout(this.cupDown, 1200);
-    setTimeout(this.hideBall, 2000);
-    setTimeout(this.newGame, 2000);
+    this.setState({status: Status.end, overlay: false})
   },
-  moveCups: function () {
-    if (this.state.game.rounds > 0) {
-      this.setState(this.state.game.moveCups());
-      setTimeout(this.moveCups, 1000);
+  playAnimation: function (type, callback) {
+    callback = callback || function () {};
+    var that = this;
+    if (type == Animation.SHOW_BALL) {
+      switch (this.state.frame) {
+        case 0: // 1. Lift cup and show the ball
+          this.state.cups[1].up = true;
+          setTimeout(function () {that.playAnimation(type, callback)}, 500);
+          this.setState({ball: true, frame: this.state.frame+1});
+          break;
+        case 1: // 2. Put cup down
+          this.state.cups[1].up = false;
+          setTimeout(function () {that.playAnimation(type, callback)}, 500);
+          this.setState({frame: this.state.frame+1});
+          break;
+        case 2: // 3. Hide ball
+          this.setState({ball: false, frame: 0});
+          callback();
+          break;
+      }
     }
-    else {
-      this.endShow();
+    else if (type == Animation.MOVE_CUPS) {
+      if (this.state.frame < GAME_ROUND * 2) {
+        // Make 2 cups switch position
+        a = Math.floor(Math.random() * NUM_CUPS);
+        b = (a + 1) % NUM_CUPS;
+        this.state.cups[a].oldPos = this.state.cups[a].pos;
+        this.state.cups[a].pos = this.state.cups[b].oldPos = this.state.cups[b].pos;
+        this.state.cups[b].pos = this.state.cups[a].oldPos;
+        this.state.cups[3-a-b].oldPos = this.state.cups[3-a-b].pos;
+        this.setState({frame: this.state.frame+1});
+        setTimeout(function () {that.playAnimation(type, callback)}, 2000);
+      }
+      else {
+        this.setState({frame: 0});
+        callback();
+      }
     }
   },
   handleCupClick: function (cup_id) {
-    if (this.state.game.gameStatus != "guess") {
+    var that = this;
+    if (this.state.status != Status.end) {
       return;
     }
-    if (cup_id == 1) {
-      this.state.game.gameStatus = "win";
-    }
-    else {
-      this.state.game.gameStatus = "lose";
-    }
-    this.setState(this.state.game);
+    this.playAnimation(Animation.SHOW_BALL, function () {
+      if (cup_id == 1) {
+        that.setState({status: Status.end_win, overlay: true})
+      }
+      else {
+        that.setState({status: Status.end_lose, overlay: true})
+      }
+    });
   },
   render: function () {
     var that = this;
-    var cups = this.state.game.cups.map(function (cup) {
-      return (CupView({cup: cup, raise: cup.up, onClick: that.handleCupClick.bind(this, cup.id)}))
+    var overlay = '';
+    var ball ='';
+    var cups = this.state.cups.map(function (cup) {
+      return (CupView({cup: cup, up: cup.up, onClick: that.handleCupClick.bind(this, cup.id)}))
     });
-    var classArray = [''];
-    var classes = React.addons.classSet.apply(null, classArray);
+    if (this.state.overlay) {
+      overlay = (Overlay({status: this.state.status, onStart: this.startGame, onEnd: this.endGame, onNew: this.newGame}));
+    }
+    if (this.state.ball) {
+      ball = (Ball({position: this.state.cups[1].pos}));
+    }
     return (
       React.DOM.div(null, 
-      GameStatusView({status: this.state.game.gameStatus, onStart: this.startGame, onEnd: this.endGame}), 
-        React.DOM.div({className: "gameBoard"}, 
-          cups, 
-          BallView({position: this.state.game.ballPosition, visible: this.state.game.isballVisible})
-        )
+        overlay, 
+        React.DOM.div({className: "board"}, " ", cups, " ", ball, " ")
       )
     );
   }
 });
 
 var CupView = React.createClass({displayName: 'CupView',
-  getInitialState: function () {
-    return {game: new Game, gameStatus: "new"};
-  },
   render: function () {
     var cup = this.props.cup;
-    var raise = this.props.raise;
+    var raise = this.props.up;
     var clickHandler = this.props.onClick;
     var classArray = ['cup'];
-    var position = 'position_' + cup.position;
-
+    var position = 'position_' + cup.pos;
     classArray.push(position);
-    if (raise) {
-      classArray.push("raise");
-    }
-
+    var move = 'move_from_' + cup.oldPos + '_to_' + cup.pos;
+    classArray.push(move);
+    if (raise) { classArray.push('raise'); }
     var classes = React.addons.classSet.apply(null, classArray);
     return (
-      ReactCSSTransitionGroup({transitionName: "switch"}, 
-        React.DOM.span({className: classes, onClick: clickHandler, key: cup.id})
-      )
+      React.DOM.span({className: classes, onClick: clickHandler, key: cup.id})
     );
   }
 });
 
-var BallView = React.createClass({displayName: 'BallView',
+var Ball = React.createClass({displayName: 'Ball',
   render: function () {
     var classArray = ['ball'];
-    var visible = this.props.visible;
     var position = 'position_' + this.props.position;
     classArray.push(position);
-    if (!visible) {
-      classArray.push("hidden");
-    }
     var classes = React.addons.classSet.apply(null, classArray);
     return (
       React.DOM.span({className: classes})
@@ -111,42 +144,38 @@ var BallView = React.createClass({displayName: 'BallView',
   }
 });
 
-var GameStatusView = React.createClass({displayName: 'GameStatusView',
+var Overlay = React.createClass({displayName: 'Overlay',
   render: function () {
     var status = this.props.status;
-    var classArray = ['overlay', 'status'];
+    var classArray = ['overlay'];
     var message = '';
     var button = '';
-    if (status == 'new') { 
+
+    if (status == Status.new_game) { 
       message = 'Welcome to Shell Game!';
-      button = (React.DOM.button({onClick: this.props.onStart, onTouchEnd: this.props.onStart}, "Start"))
-
+      button = (React.DOM.button({onClick: this.props.onStart, onTouchEnd: this.props.onStart}, "Start"));
     }
-    else if (status == "endshow") {
-      message = "Now guess where the ball is?";
+    else if (status == Status.start) {
+      message = 'Where the ball is?';
+      button = (React.DOM.button({onClick: this.props.onEnd, onTouchEnd: this.props.onEnd}, "Guess"));
     }
-    else if (status == "win") {
-      message = "You Win!";
-      button = (React.DOM.button({onClick: this.props.onEnd, onTouchEnd: this.props.onEnd}, "Continue"))
+    else if (status == Status.end_win) {
+      message = 'You are right!';
+      button = (React.DOM.button({onClick: this.props.onNew, onTouchEnd: this.props.onNew}, "Continue"));
     }
-    else if (status == "lose") {
-      message = "You Lose!";
-      button = (React.DOM.button({onClick: this.props.onEnd, onTouchEnd: this.props.onEnd}, "Continue"))
-
-    }
-    else {
-      classArray.push("hidden")
+    else if (status == Status.end_lose) {
+      message = 'Ball is not there :(';
+      button = (React.DOM.button({onClick: this.props.onNew, onTouchEnd: this.props.onNew}, "Continue"));
     }
     var classes = React.addons.classSet.apply(null, classArray);
     return (
       React.DOM.div({className: classes}, 
-        React.DOM.span(null, message), 
+        React.DOM.span({className: "message"}, message), 
         button
       )
     );
   }
-
 });
 
 React.initializeTouchEvents(true);
-var ci = React.renderComponent(GameView(null), document.getElementById('content'));
+var ci = React.renderComponent(ShellGame(null), document.getElementById('content'));

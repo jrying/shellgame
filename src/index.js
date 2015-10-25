@@ -156,7 +156,7 @@ var Overlay = React.createClass({
       button = (<button onClick={this.props.onStart} onTouchEnd={this.props.onStart}>Start</button>);
     }
     else if (status == Status.start) {
-      message = 'Where the ball is?';
+      message = 'Where is the ball?';
       button = (<button onClick={this.props.onEnd} onTouchEnd={this.props.onEnd}>Guess</button>);
     }
     else if (status == Status.end_win) {

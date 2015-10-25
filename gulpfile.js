@@ -10,13 +10,13 @@ gulp.task('styles', function () {
   return gulp.src(styles)
     .pipe(sass())
     .pipe(prefix('last 2 versions', '> 1%', 'ie 8', 'ie 7'))
-    .pipe(gulp.dest('built'));
+    .pipe(gulp.dest('build'));
 });
 
 gulp.task('jsx', function () {
   return gulp.src(scripts)
     .pipe(react())
-    .pipe(gulp.dest('built'));
+    .pipe(gulp.dest('build'));
 });
 
 gulp.task('watch', function () {

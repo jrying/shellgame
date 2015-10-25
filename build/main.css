@@ -49,9 +49,6 @@ button {
   -webkit-align-items: center;
       -ms-flex-align: center;
           align-items: center;
-  -webkit-justify-content: center;
-      -ms-flex-pack: center;
-          justify-content: center;
   text-align: center;
   left: 0px;
   right: 0px;
