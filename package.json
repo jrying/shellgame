@@ -12,7 +12,8 @@
     "gulp-react": "^0.5.0",
     "gulp-sass": "^2.0.4",
     "node-sass": "^3.3.3",
-    "wrappy": "^1.0.1"
+    "wrappy": "^1.0.1",
+    "node-static": "^0.7.7"
   },
   "scripts": {
     "prestart": "npm install",
