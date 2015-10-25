@@ -25,7 +25,6 @@ var ShellGame = React.createClass({displayName: 'ShellGame',
   },
   newGame: function () {
     this.setState(this.getInitialState());
-    this.state.status = Status.new_game;
   },
   startGame: function () {
     var that = this;

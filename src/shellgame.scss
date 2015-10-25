@@ -4,6 +4,10 @@ $cup_slope: 20px;
 $cup_gap: 40px;
 $ball_radius: 40px;
 
+body {
+  background-color: lightblue;  
+}
+
 .board {
   background-color: lightblue;
   position: relative;
@@ -46,7 +50,7 @@ $ball_radius: 40px;
 }
 
 .message {
-  padding-bottom: 100px;
+  padding: 40px;
 }
 
 .hidden {
