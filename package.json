@@ -13,5 +13,9 @@
     "gulp-sass": "^2.0.4",
     "node-sass": "^3.3.3",
     "wrappy": "^1.0.1"
+  },
+  "scripts": {
+    "prestart": "npm install",
+    "start": "static -p 3000"
   }
 }
