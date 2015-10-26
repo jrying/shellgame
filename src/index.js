@@ -1,18 +1,17 @@
 /** @jsx React.DOM */
 
-//TODO improve Animation
-//TODO fix sequence, remove timeouts
-//TODO make better dom structure and css to support devices
+//TODO mobile border broken
+//TODO ontouchend event triggered twice
 
 var Animation = {SHOW_BALL: 1, MOVE_CUPS: 2}
-var Status = {new_game: 1, start: 2, end: 3, end_win: 4, end_lose: 5}
-var GAME_ROUND = 3;
-var NUM_CUPS = 3;
+var Status = {new_game: 1, start: 2, end: 3, end_win: 4, end_lose: 5, beaten: 6}
+var LevelParams = [{round:3, num_cups: 3}, {round:5, num_cups: 3}, {round:5, num_cups: 4}, {round:7, num_cups: 4}]
+var current_level = 0;
 
 var ShellGame = React.createClass({
   getInitialState: function () {
     var cups = [];
-    for (var i = 0; i < NUM_CUPS; i++) {
+    for (var i = 0; i < LevelParams[current_level].num_cups; i++) {
       cups.push({id: i, up: false, pos: i, oldPos: i})
     }
     return {
@@ -20,11 +19,15 @@ var ShellGame = React.createClass({
       frame: 0,
       cups: cups,
       ball: false,
-      overlay: true
+      overlay: true,
+      round: LevelParams[current_level].round
     };
   },
   newGame: function () {
-    this.setState(this.getInitialState());
+    var that = this;
+    if (this.state.status == Status.end_win) current_level += 1;
+    // Add delay to workaround OnTouchEnd triggered twice
+    setTimeout(that.setState(that.getInitialState()), 500);
   },
   startGame: function () {
     var that = this;
@@ -46,12 +49,12 @@ var ShellGame = React.createClass({
       switch (this.state.frame) {
         case 0: // 1. Lift cup and show the ball
           this.state.cups[1].up = true;
-          setTimeout(function () {that.playAnimation(type, callback)}, 500);
+          setTimeout(function () {that.playAnimation(type, callback)}, 800);
           this.setState({ball: true, frame: this.state.frame+1});
           break;
         case 1: // 2. Put cup down
           this.state.cups[1].up = false;
-          setTimeout(function () {that.playAnimation(type, callback)}, 500);
+          setTimeout(function () {that.playAnimation(type, callback)}, 800);
           this.setState({frame: this.state.frame+1});
           break;
         case 2: // 3. Hide ball
@@ -61,16 +64,18 @@ var ShellGame = React.createClass({
       }
     }
     else if (type == Animation.MOVE_CUPS) {
-      if (this.state.frame < GAME_ROUND * 2) {
+      var num_cups = this.state.cups.length;
+      if (this.state.frame < this.state.round) {
+        for (var i = 0; i < num_cups; i++) {
+          this.state.cups[i].oldPos = this.state.cups[i].pos;  
+        }
         // Make 2 cups switch position
-        a = Math.floor(Math.random() * NUM_CUPS);
-        b = (a + 1) % NUM_CUPS;
-        this.state.cups[a].oldPos = this.state.cups[a].pos;
-        this.state.cups[a].pos = this.state.cups[b].oldPos = this.state.cups[b].pos;
+        a = Math.floor(Math.random() * num_cups);
+        b = (a + Math.floor(Math.random() * (num_cups-1)) + 1) % num_cups;
+        this.state.cups[a].pos = this.state.cups[b].oldPos
         this.state.cups[b].pos = this.state.cups[a].oldPos;
-        this.state.cups[3-a-b].oldPos = this.state.cups[3-a-b].pos;
         this.setState({frame: this.state.frame+1});
-        setTimeout(function () {that.playAnimation(type, callback)}, 2000);
+        setTimeout(function () {that.playAnimation(type, callback)}, 1000);
       }
       else {
         this.setState({frame: 0});
@@ -85,7 +90,12 @@ var ShellGame = React.createClass({
     }
     this.playAnimation(Animation.SHOW_BALL, function () {
       if (cup_id == 1) {
-        that.setState({status: Status.end_win, overlay: true})
+        if (current_level == LevelParams.length - 1) {
+          that.setState({status: Status.beaten, overlay: true})
+        }
+        else {
+          that.setState({status: Status.end_win, overlay: true})
+        }
       }
       else {
         that.setState({status: Status.end_lose, overlay: true})
@@ -99,6 +109,8 @@ var ShellGame = React.createClass({
     var cups = this.state.cups.map(function (cup) {
       return (<CupView cup={cup} up={cup.up} onClick={that.handleCupClick.bind(this, cup.id)} />)
     });
+    var boardClassArray = ['board', 'board_' + this.state.cups.length];
+    var boardClasses = React.addons.classSet.apply(null, boardClassArray);
     if (this.state.overlay) {
       overlay = (<Overlay status={this.state.status} onStart={this.startGame} onEnd={this.endGame} onNew={this.newGame} />);
     }
@@ -108,7 +120,10 @@ var ShellGame = React.createClass({
     return (
       <div>
         {overlay}
-        <div className='board'> {cups} {ball} </div>
+        <div className={boardClasses}>
+         {cups} {ball}
+         <span className='level'> Level {current_level+1}</span>
+        </div>
       </div>
     );
   }
@@ -127,7 +142,7 @@ var CupView = React.createClass({
     if (raise) { classArray.push('raise'); }
     var classes = React.addons.classSet.apply(null, classArray);
     return (
-      <span className={classes} onClick={clickHandler} key={cup.id}></span>
+      <span className={classes} onClick={clickHandler} onTouchEnd={clickHandler} key={cup.id}></span>
     );
   }
 });
@@ -152,7 +167,7 @@ var Overlay = React.createClass({
     var button = '';
 
     if (status == Status.new_game) { 
-      message = 'Welcome to Shell Game!';
+      message = 'Ready to start?';
       button = (<button onClick={this.props.onStart} onTouchEnd={this.props.onStart}>Start</button>);
     }
     else if (status == Status.start) {
@@ -167,6 +182,10 @@ var Overlay = React.createClass({
       message = 'Ball is not there :(';
       button = (<button onClick={this.props.onNew} onTouchEnd={this.props.onNew}>Continue</button>);
     }
+    else if (status == Status.beaten) {
+      message = 'You are the WINNER!';
+      button = '';
+    }
     var classes = React.addons.classSet.apply(null, classArray);
     return (
       <div className={classes}>
@@ -178,4 +197,4 @@ var Overlay = React.createClass({
 });
 
 React.initializeTouchEvents(true);
-var ci = React.renderComponent(<ShellGame />, document.getElementById('content'));
+React.renderComponent(<ShellGame />, document.getElementById('content'));

@@ -1,8 +1,9 @@
-$cup_width: 160px;
+$cup_width: 140px;
 $cup_height: 200px;
 $cup_slope: 20px;
-$cup_gap: 40px;
+$cup_gap: 30px;
 $ball_radius: 40px;
+$move_radius: 30px;
 
 body {
   background-color: lightblue;  
@@ -12,10 +13,21 @@ body {
   background-color: lightblue;
   position: relative;
   height: $cup_height*2 - $cup_gap;
-  width: $cup_width*3 + $cup_gap*6;
-  border: 100px solid;
+  border: 80px solid;
   border-color: lightblue;
   border-bottom-color: floralwhite;
+}
+
+.board_3 {
+  width: $cup_width*3 + $cup_gap*4;
+}
+
+.board_4 {
+  width: $cup_width*4 + $cup_gap*5;
+}
+
+.board_5 {
+  width: $cup_width*5 + $cup_gap*6;
 }
 
 .cup {
@@ -27,13 +39,12 @@ body {
   display: inline-block;
   position: absolute; 
   top: $cup_height;
-  transition: all 1s ease;
+  transition: all 0.5s ease;
   z-index: 1;
 }
 
 .cup.moving.front {
   width: ($cup_width - $cup_slope*2) * 1.1;
-  
 }
 
 .cup.raise {
@@ -49,26 +60,21 @@ body {
   margin-left: ($cup_width)/2 - $ball_radius;
 }
 
-.overlay {
-  z-index: 2;  
+.level {
+  font-size: 40px;
+  font-weight: bolder;
+  color: #666;
+  padding-top: 60px;
 }
 
-.message {
-  padding: 40px;
-}
-
-.hidden {
-  display: none;
-}
-
-@for $pos from -1 through 2 {
+@for $pos from 0 through 4 {
   .position_#{$pos} {
-    left: $cup_gap*2 + ($cup_gap + $cup_width) * $pos;
+    left: $cup_gap + ($cup_gap + $cup_width) * $pos;
   }
 }
 
-@for $from from 0 through 2 {
-  @for $to from 0 through 2 {
+@for $from from 0 through 4 {
+  @for $to from 0 through 4 {
     $name: move_from_#{$from}_to_#{$to};
     .#{$name} {
         animation-duration: 1s;
@@ -78,24 +84,24 @@ body {
     @if $from < $to {
       @keyframes $name {
         from { 
-          transform: rotate(0deg) translateX(30px) rotate(0deg); 
-          left: $cup_gap*2 + ($cup_gap + $cup_width) * $from - 30;
+          transform: rotate(0deg) translateX($move_radius) rotate(0deg); 
+          left: $cup_gap + ($cup_gap + $cup_width) * $from - $move_radius;
         }
         to {
-          transform: rotate(180deg) translateX(30px) rotate(-180deg);
-          left: $cup_gap*2 + ($cup_gap + $cup_width) * $to + 30;
+          transform: rotate(180deg) translateX($move_radius) rotate(-180deg);
+          left: $cup_gap + ($cup_gap + $cup_width) * $to + 30;
         }
       }
     }
     @else if $from > $to {
       @keyframes $name {
         from { 
-          transform: rotate(-180deg) translateX(30px) rotate(180deg); 
-          left: $cup_gap*2 + ($cup_gap + $cup_width) * $from + 30;
+          transform: rotate(-180deg) translateX($move_radius) rotate(180deg); 
+          left: $cup_gap + ($cup_gap + $cup_width) * $from + $move_radius;
         }
         to {
-          transform: rotate(0deg) translateX(30px) rotate(0deg);
-          left: $cup_gap*2 + ($cup_gap + $cup_width) * $to - 30;
+          transform: rotate(0deg) translateX($move_radius) rotate(0deg);
+          left: $cup_gap + ($cup_gap + $cup_width) * $to - $move_radius;
         }
       }
     }
